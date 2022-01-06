@@ -41,6 +41,7 @@ if __name__ == "__main__":
             print(port.name)
     elif sys.argv[1] == "upload":
         # TODO
+        pass
     elif sys.argv[1] == "read":
         port = validate_and_open_port()
         
