@@ -1,19 +1,17 @@
-# Script that receives serial input from the PICDuino
-# Args: <fulldevicename> e.g /dev/ttyUSB0 aka the port connecting the PICDuino
-
 import sys
 import argparse
 import serial.tools.list_ports
 
 # Pass in command to print error message
-def validate_and_open_port(port, ports):
-    if port not in ports:
+def validate_and_open_port(portname, ports):
+    getportname = lambda port: port.name
+    if portname not in map(getportname, ports):
         # The port can't be found
-        print(f"Error: Invalid port name: \"{port.name}\"")
+        print(f"Error: Invalid port name: \"{portname}\"")
         exit()
 
     # Open port
-    return serial.Serial(sys.argv[1])
+    return serial.Serial(portname)
 
 if __name__ == "__main__":
     # Specify required/optional args
@@ -27,7 +25,7 @@ if __name__ == "__main__":
     ], help="what you want to do with the PICDuino")
     
     # Only require these arguments for specific commands
-    parser.add_argument('-p', dest="port", help="the port name connecting the PICDuino", required=
+    parser.add_argument('-p', dest="portname", help="the port name connecting the PICDuino", required=
             ('upload' in sys.argv or 'read' in sys.argv or 'send' in sys.argv)
             )
     parser.add_argument('-m', dest="message", help="message to send to PICDuino", required='send' in sys.argv)
@@ -46,7 +44,7 @@ if __name__ == "__main__":
         for port in ports:
             print(port.name)
     elif args.command in ['read', 'send', 'upload']:
-        port = validate_and_open_port(args.port, ports)
+        port = validate_and_open_port(args.portname, ports)
         if args.command == 'read':
             # Print output
             print("Press Ctrl+C to close the program. Receiver output:")
@@ -61,3 +59,5 @@ if __name__ == "__main__":
             # TODO
             pass
 
+        # Done with port
+        port.close()
