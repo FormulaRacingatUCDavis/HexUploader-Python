@@ -1,3 +1,4 @@
+# Script that receives serial input from the PICDuino
 import serial.tools.list_ports
 
 if __name__ == "__main__":
