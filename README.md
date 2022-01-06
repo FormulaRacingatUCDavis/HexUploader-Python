@@ -14,4 +14,14 @@ Only verified to work on:
 
 ## How to use
 1. Physically connect Arduino to computer
-2. Run the script `python3 HexUploader.py`
+2. Run the script `python3 HexUploader.py <command> [<portname> [<message> | <hexfile>]]`
+
+The values for `<command>` are:
+- `listports`
+- `upload`
+- `read`
+- `send`
+
+### Required command arguments
+- `<message>` for the `send` command. It can be a string as a single word or multiple words in double quotes.
+- `<hexfile>` for the `upload` command. It must be a valid file name.
