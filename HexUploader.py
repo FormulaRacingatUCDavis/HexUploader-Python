@@ -23,7 +23,10 @@ if __name__ == "__main__":
         'read',
         'send'
     ], help="what you want to do with the PICDuino")
-    
+
+    # Validate command
+    parser.parse_args()
+
     # Only require these arguments for specific commands
     parser.add_argument('-p', dest="portname", help="the port name connecting the PICDuino", required=
             ('upload' in sys.argv or 'read' in sys.argv or 'send' in sys.argv)
