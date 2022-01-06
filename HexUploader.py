@@ -1,20 +1,6 @@
 import serial.tools.list_ports
 
-# UI libraries
-from tkinter import *
-from tkinter import ttk
-
 if __name__ == "__main__":
-    
-    '''
-    # GUI
-    root = Tk()
-    #ttk.Button(root, text="Upload").grid()
-    Text(root, width=40, height=40).grid()
-    root.mainloop()
-    '''
-
-    # '''
     selection = -1
     valid_selection = False
     while valid_selection == False:
