@@ -15,52 +15,52 @@ def validate_and_open_port(portname, ports):
 
 if __name__ == "__main__":
     # Specify required/optional args
-    parser = argparse.ArgumentParser(description='Command line toolkit for the PICDuino')
-    # List of commands
-    parser.add_argument('command', choices=[
+    parser = argparse.ArgumentParser(description='Command line toolkit for the PICDuino microcontroller')
+
+    # List of operations
+    parser.add_argument('operation', choices=[
         'listports',
         'upload',
         'read',
         'send'
-    ], help="what you want to do with the PICDuino")
+    ], help="operation to perform with the serial ports / microcontroller")
 
-    # Validate command
+    # Did the user enter a valid operation?
     parser.parse_args()
 
     # Only require these arguments for specific commands
-    parser.add_argument('-p', dest="portname", help="the port name connecting the PICDuino", required=
-            ('upload' in sys.argv or 'read' in sys.argv or 'send' in sys.argv)
-            )
-    parser.add_argument('-m', dest="message", help="message to send to PICDuino", required='send' in sys.argv)
-    parser.add_argument('-f', dest="file", help="the name of the hex binary to upload", required='upload' in sys.argv)
+    ops_requiring_port = ['upload', 'read', 'send']
+    parser.add_argument('-p', dest="portname", help="the port name connecting the PICDuino", required=sys.argv[1] in ops_requiring_port)
+    parser.add_argument('-m', dest="message", help="message to send to PICDuino", required=sys.argv[1] == 'send')
+    parser.add_argument('-f', dest="file", help="the name of the hex binary to upload", required=sys.argv[1] == 'upload')
 
-    # Get user inputted commands
+    # Get op + flags
     args = parser.parse_args()
 
     # Get available ports
     ports = serial.tools.list_ports.comports()
 
-    # Process command
-    if args.command == "listports":
+    # Process operation
+    if args.operation == "listports":
         # Print all the port names
         print("Ports found:", len(ports))
         for port in ports:
             print(port.name)
-    elif args.command in ['read', 'send', 'upload']:
+    elif args.operation in ops_requiring_port:
         port = validate_and_open_port(args.portname, ports)
-        if args.command == 'read':
+        if args.operation == 'read':
             # Print output
             print("Press Ctrl+C to close the program. Receiver output:")
             while(True):
                 # Don't print newline since string already ends with \n
                 print(port.read_until().decode(), end="")
             # TODO: need to properly terminate
-        elif command == "send":
+        elif args.operation == "send":
             # Send message
             port.write(bytes(message))
-        elif command == "upload":
+        elif args.operation == "upload":
             # TODO
             pass
 
-        # Done with port
+        # Done using port
         port.close()
