@@ -11,17 +11,17 @@ if __name__ == "__main__":
             print("There are no ports available. Please reconnect your PICDuino and try again")
             exit()
 
-        print("List of serial ports:")
+        print("<selection number>: <serial port>")
         for i in range(0, len(ports)):
             port = ports[i]
             print(f"{i}: {port[0]}")
 
         # Prompt user to open port
-        selection = int(input("Enter selection number for port:"))
+        selection = int(input("Enter selection number for port to read from:"))
 
         # Input validation
         if selection < 0 or selection >= len(ports):
-            print("Error: please select a valid number!")
+            print("Error: please enter a valid selection!")
         else:
             valid_selection = True
 
@@ -29,8 +29,12 @@ if __name__ == "__main__":
     print("Press Ctrl+C to close the program. Receiver output:")
     port = serial.Serial(port[0])
     while(True):
-        print(port.read_until())
+        # Decode byte array to string
+        # https://docs.python.org/3/library/stdtypes.html#bytes.decode
+        # Don't print newline since string already ends with \n
+        # read_until() continues to read until it encounters a newline
+        print(port.read_until().decode(), end="")
 
+    # TODO: this code can never run
     port.close()
-    # '''
 
