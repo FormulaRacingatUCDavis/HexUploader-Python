@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # Get available ports
     ports = serial.tools.list_ports.comports()
-   
+
     # Process command
     if args.command == "listports":
         # Print all the port names
