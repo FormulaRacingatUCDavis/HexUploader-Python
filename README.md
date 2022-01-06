@@ -14,14 +14,19 @@ Only verified to work on:
 
 ## How to use
 1. Physically connect Arduino to computer
-2. Run the script `python3 HexUploader.py <command> [<portname> [<message> | <hexfile>]]`
+2. Run the script. This is the output of `python3 HexUploader.py -h`:
+```
+usage: HexUploader.py [-h] [-p PORT] [-m MESSAGE] [-f FILE] {listports,upload,read,send}
 
-The values for `<command>` are:
-- `listports`
-- `upload`
-- `read`
-- `send`
+Command line toolkit for the PICDuino
 
-### Required command arguments
-- `<message>` for the `send` command. It can be a string as a single word or multiple words in double quotes.
-- `<hexfile>` for the `upload` command. It must be a valid file name.
+positional arguments:
+  {listports,upload,read,send}
+                        what you want to do with the PICDuino
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PORT               the port name connecting the PICDuino
+  -m MESSAGE            message to send to PICDuino
+  -f FILE               the name of the hex binary to upload
+```
