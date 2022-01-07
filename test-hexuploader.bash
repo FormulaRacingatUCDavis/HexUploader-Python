@@ -2,39 +2,30 @@
 # Test script for HexUploader.py
 # Written by Julian
 
-echo "Test: no args"
-echo
-python3 HexUploader.py
-echo
+# Commands to test
+tests=(
+	"python3 HexUploader.py" \
+	"python3 HexUploader.py -h" \
+	"python3 HexUploader.py invalid-subcommand" \
+	"python3 HexUploader.py listports" \
+	"python3 HexUploader.py read" \
+	"python3 HexUploader.py send" \
+	"python3 HexUploader.py upload" \
+	# TODO: add more tests
+)
 
-echo "Test: invalid subcommand"
-echo
-python3 HexUploader.py askdjfnjk
-echo
+run_tests(){
+	for test_command in "${tests[@]}"; do
+		# Run test
+		echo "Output: $test_command"
+		echo "--------------------------------"
+		$test_command
+		echo "--------------------------------"
+		echo
+	done
+}
 
-echo "Test: listports no args"
-echo
-python3 HexUploader.py listports
-echo
-
-echo "Test: read no args"
-echo
-python3 HexUploader.py read
-echo
-
-echo "Test: send no args"
-echo
-python3 HexUploader.py send
-echo
-
-echo "Test: upload no args"
-echo
-python3 HexUploader.py upload
-echo
-
-echo "Test: read with invalid port"
-echo
-python3 HexUploader.py read -p sfjkbfkjbjk
-echo
+run_tests
 
 echo "Done."
+
