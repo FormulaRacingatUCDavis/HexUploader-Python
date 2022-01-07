@@ -1,5 +1,6 @@
 import sys
 import argparse
+import serial
 from serial.tools.list_ports import comports
 
 if __name__ == "__main__":
