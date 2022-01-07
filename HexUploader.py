@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # Each subparser handles the required args for a subcommand
     subparsers = parser.add_subparsers(title='subcommand', dest='subcommand', required=True,
                                        description='valid subcommands to perform operation on microcontroller / serial ports')
-    parser_listports = subparsers.add_parser('listports', help='lists all the serial ports')
+    parser_listports = subparsers.add_parser('listports', help='lists all the serial port paths')
     parser_upload = subparsers.add_parser('upload', help='upload a hex binary file to the microcontroller')
     parser_read = subparsers.add_parser('read', help='read data from microcontroller')
     parser_send = subparsers.add_parser('send', help='send data to microcontroller')
@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
     # Port required for all operations that connect to the microcontroller
     PORT_FLAG = '-p'
-    PORT_DESTNAME = 'portname'
-    PORT_HELP_STR = 'Port name connecting the microcontroller'
+    PORT_DESTNAME = 'device_path'
+    PORT_HELP_STR = 'device path for port connecting the microcontroller'
     parser_upload.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     parser_read.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     parser_send.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
@@ -37,21 +37,21 @@ if __name__ == "__main__":
 
     # Process operation
     if args.subcommand == "listports":
-        # Print all the port names
+        # Print all the device paths
         print("Ports found:", len(ports))
         for port in ports:
-            print(port.name)
+            print(port.device)
     elif args.subcommand in ['upload', 'read', 'send']:
         # These commands require a port connection
         # Did the user enter a valid port?
-        port_names = map(lambda port: port.name, ports)
-        if args.portname not in port_names:
+        device_paths = map(lambda port: port.device, ports)
+        if args.device_path not in device_paths:
             # The port can't be found
-            print(f"Error: Invalid port with name: \"{args.portname}\". Please run the `listports` command to find a valid port name.")
+            print(f"Error: Invalid port with name: \"{args.device_path}\"")
             exit()
 
         # Open connection to port
-        port = serial.Serial(args.portname)
+        port = serial.Serial(args.device_path)
 
         if args.subcommand == 'read':
             # Receive and print microcontroller output
