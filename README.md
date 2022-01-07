@@ -16,17 +16,19 @@ Only verified to work on:
 1. Physically connect Arduino to computer
 2. Run the script. This is the output of `python3 HexUploader.py -h`:
 ```
-usage: HexUploader.py [-h] [-p PORT] [-m MESSAGE] [-f FILE] {listports,upload,read,send}
+usage: HexUploader.py [-h] {listports,upload,read,send} ...
 
-Command line toolkit for the PICDuino
-
-positional arguments:
-  {listports,upload,read,send}
-                        what you want to do with the PICDuino
+Command line toolkit for the PICDuino microcontroller
 
 optional arguments:
   -h, --help            show this help message and exit
-  -p PORT               the port name connecting the PICDuino
-  -m MESSAGE            message to send to PICDuino
-  -f FILE               the name of the hex binary to upload
+
+subcommand:
+  valid subcommands to perform operation on microcontroller / serial ports
+
+  {listports,upload,read,send}
+    listports           lists all the serial ports
+    upload              upload a hex binary file to the microcontroller
+    read                read data from microcontroller
+    send                send data to microcontroller
 ```
