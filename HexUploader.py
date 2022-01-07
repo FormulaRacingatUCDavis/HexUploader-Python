@@ -1,64 +1,67 @@
 import sys
 import argparse
-import serial.tools.list_ports
-
-# Pass in command to print error message
-def validate_and_open_port(portname, ports):
-    getportname = lambda port: port.name
-    if portname not in map(getportname, ports):
-        # The port can't be found
-        print(f"Error: Invalid port name: \"{portname}\"")
-        exit()
-
-    # Open port
-    return serial.Serial(portname)
+from serial.tools.list_ports import comports
 
 if __name__ == "__main__":
-    # Specify required/optional args
+    # Parse subcommands and their required args
     parser = argparse.ArgumentParser(description='Command line toolkit for the PICDuino microcontroller')
+    # Create subparsers for each subcommand
+    # Each subparser handles the required args for a subcommand
+    subparsers = parser.add_subparsers(title='subcommand', dest='subcommand',
+                                       description='valid subcommands to perform operation on microcontroller / serial ports')
+    parser_listports = subparsers.add_parser('listports', help='lists all the serial ports')
+    parser_upload = subparsers.add_parser('upload', help='upload a hex binary file to the microcontroller')
+    parser_read = subparsers.add_parser('read', help='read data from microcontroller')
+    parser_send = subparsers.add_parser('send', help='send data to microcontroller')
 
-    # List of operations
-    parser.add_argument('operation', choices=[
-        'listports',
-        'upload',
-        'read',
-        'send'
-    ], help="operation to perform with the serial ports / microcontroller")
+    # Required subcommand args
 
-    # Did the user enter a valid operation?
-    parser.parse_args()
+    # Port required for all operations that connect to the microcontroller
+    PORT_FLAG = '-p'
+    PORT_DESTNAME = 'portname'
+    PORT_HELP_STR = 'Port name connecting the microcontroller'
+    parser_upload.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
+    parser_read.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
+    parser_send.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
+    # Message required to send to microcontroller
+    parser_send.add_argument('-m', dest="message", help="Message to send to microcontroller", required=True)
+    # File required to upload to microcontroller
+    parser_send.add_argument('-f', dest="file", help="Name of the hex binary to upload", required=True)
 
-    # Only require these arguments for specific commands
-    ops_requiring_port = ['upload', 'read', 'send']
-    parser.add_argument('-p', dest="portname", help="the port name connecting the PICDuino", required=sys.argv[1] in ops_requiring_port)
-    parser.add_argument('-m', dest="message", help="message to send to PICDuino", required=sys.argv[1] == 'send')
-    parser.add_argument('-f', dest="file", help="the name of the hex binary to upload", required=sys.argv[1] == 'upload')
-
-    # Get op + flags
+    # Validate and get subcommand + flags
     args = parser.parse_args()
 
     # Get available ports
-    ports = serial.tools.list_ports.comports()
+    ports = comports()
 
     # Process operation
-    if args.operation == "listports":
+    if args.subcommand == "listports":
         # Print all the port names
         print("Ports found:", len(ports))
         for port in ports:
             print(port.name)
-    elif args.operation in ops_requiring_port:
-        port = validate_and_open_port(args.portname, ports)
-        if args.operation == 'read':
-            # Print output
+    elif args.subcommand in ['upload', 'read', 'send']:
+        # These commands require a port connection
+        # Did the user enter a valid port?
+        port_names = map(lambda port: port.name, ports)
+        if args.portname not in port_names:
+            # The port can't be found
+            print(f"Error: Invalid port with name: \"{args.portname}\". Please run the `listports` command to find a valid port name.")
+            exit()
+
+        # Open connection to port
+        port = serial.Serial(args.portname)
+
+        if args.subcommand == 'read':
+            # Receive and print microcontroller output
             print("Press Ctrl+C to close the program. Receiver output:")
             while(True):
-                # Don't print newline since string already ends with \n
+                # Print string already ends with \n
                 print(port.read_until().decode(), end="")
-            # TODO: need to properly terminate
-        elif args.operation == "send":
-            # Send message
-            port.write(bytes(message))
-        elif args.operation == "upload":
+            # TODO: need to properly terminate when Ctrl+C is pressed
+        elif args.subcommand == "send":
+            port.write(bytes(args.message))
+        elif args.subcommand == "upload":
             # TODO
             pass
 
