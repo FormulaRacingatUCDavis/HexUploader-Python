@@ -20,6 +20,9 @@ Only verified to work on:
 1. Physically connect Arduino to computer
 2. Run the script according to the syntax listed below.
 
+### Note for Windows
+If you are using Windows, use `py` instead of `python3`.
+
 ### Help sections
 `python3 HexUploader.py -h`:
 ```
