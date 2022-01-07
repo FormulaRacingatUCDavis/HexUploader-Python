@@ -13,7 +13,7 @@ Only verified to work on:
 - pyserial version: v3.5 (both Linux and Windows)
 
 ## Linux Setup
-1. To open a serial port through Python, you must add yourself as a user to the group `dialout` in order to have read permissions. To do this, run `sudo adduser $USER dialout`
+1. To interact with a serial port on Linux, you must add yourself as a user to the group `dialout`. To do this, run `sudo adduser $USER dialout`
 2. Restart your computer to apply the changes from step 2.
 
 ## How to use
