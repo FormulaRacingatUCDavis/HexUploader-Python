@@ -7,7 +7,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Command line toolkit for the PICDuino microcontroller')
     # Create subparsers for each subcommand
     # Each subparser handles the required args for a subcommand
-    subparsers = parser.add_subparsers(title='subcommand', dest='subcommand',
+    subparsers = parser.add_subparsers(title='subcommand', dest='subcommand', required=True,
                                        description='valid subcommands to perform operation on microcontroller / serial ports')
     parser_listports = subparsers.add_parser('listports', help='lists all the serial ports')
     parser_upload = subparsers.add_parser('upload', help='upload a hex binary file to the microcontroller')
