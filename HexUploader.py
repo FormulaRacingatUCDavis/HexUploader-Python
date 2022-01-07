@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # Message required to send to microcontroller
     parser_send.add_argument('-m', dest="message", help="Message to send to microcontroller", required=True)
     # File required to upload to microcontroller
-    parser_send.add_argument('-f', dest="file", help="Name of the hex binary to upload", required=True)
+    parser_upload.add_argument('-f', dest="file", help="Name of the hex binary to upload", required=True)
 
     # Validate and get subcommand + flags
     args = parser.parse_args()
