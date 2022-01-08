@@ -3,14 +3,14 @@ import argparse
 import serial
 from serial.tools.list_ports import comports
 
-def read_port(port):
+def read_port(device_path):
     # Receive and print microcontroller output
     print("Press Ctrl+C to close the program. Receiver output:")
-    while(True):
-        # Print string already ends with \n
-        print(port.read_until().decode(encoding="ascii"), end="")
-    # TODO: need to properly terminate when Ctrl+C is pressed
-
+    # Open connection to port
+    with serial.Serial(device_path) as port:
+        while(True):
+            # Print string already ends with \n
+            print(port.read_until().decode(encoding="ascii"), end="")
 
 if __name__ == "__main__":
     # Parse subcommands and their required args
@@ -57,15 +57,16 @@ if __name__ == "__main__":
             print(f"Error: Invalid port with name: \"{args.device_path}\"")
             exit()
 
-        # Open connection to port
-        port = serial.Serial(args.device_path)
-
         if args.subcommand == 'read':
-            read_port(port)
+            read_port(args.device_path)
         elif args.subcommand == "upload":
+            try:
+                hexfile = open(args.file)
+            except:
+                print(f"Error: cannot open file \"{args.file}\"")
             # TODO: upload
             if args.read_after_upload:
-                read_port(port)
+                read_port(args.device_path)
 
         # Done using port
         port.close()
