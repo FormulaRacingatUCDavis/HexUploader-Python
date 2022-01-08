@@ -26,7 +26,7 @@ If you are using Windows, use `py` instead of `python3`.
 ### Help sections
 `python3 HexUploader.py -h`:
 ```
-usage: HexUploader.py [-h] {listports,upload,read,send} ...
+usage: HexUploader.py [-h] {listports,upload,read} ...
 
 Command line toolkit for the PICDuino microcontroller
 
@@ -36,11 +36,10 @@ optional arguments:
 subcommand:
   valid subcommands to perform operation on microcontroller / serial ports
 
-  {listports,upload,read,send}
+  {listports,upload,read}
     listports           lists all the serial ports
     upload              upload a hex binary file to the microcontroller
     read                read data from microcontroller
-    send                send data to microcontroller
 ```
 `python3 HexUploader.py read -h`:
 ```
@@ -49,15 +48,6 @@ usage: HexUploader.py read [-h] -p DEVICE_PATH
 optional arguments:
   -h, --help      show this help message and exit
   -p DEVICE_PATH  device path for port connecting the microcontroller
-```
-`python3 HexUploader.py send -h`:
-```
-usage: HexUploader.py send [-h] -p DEVICE_PATH -m MESSAGE
-
-optional arguments:
-  -h, --help      show this help message and exit
-  -p DEVICE_PATH  device path for port connecting the microcontroller
-  -m MESSAGE      Message to send to microcontroller
 ```
 `python3 HexUploader.py upload -h`:
 ```

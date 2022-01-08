@@ -13,7 +13,6 @@ if __name__ == "__main__":
     parser_listports = subparsers.add_parser('listports', help='lists all the serial port paths')
     parser_upload = subparsers.add_parser('upload', help='upload a hex binary file to the microcontroller')
     parser_read = subparsers.add_parser('read', help='read data from microcontroller')
-    parser_send = subparsers.add_parser('send', help='send data to microcontroller')
 
     # Required subcommand args
 
@@ -23,9 +22,6 @@ if __name__ == "__main__":
     PORT_HELP_STR = 'device path for port connecting the microcontroller'
     parser_upload.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     parser_read.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
-    parser_send.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
-    # Message required to send to microcontroller
-    parser_send.add_argument('-m', dest="message", help="Message to send to microcontroller", required=True)
     # File required to upload to microcontroller
     parser_upload.add_argument('-f', dest="file", help="Name of the hex binary to upload", required=True)
 
@@ -41,7 +37,7 @@ if __name__ == "__main__":
         print("Ports found:", len(ports))
         for port in ports:
             print(port.device)
-    elif args.subcommand in ['upload', 'read', 'send']:
+    elif args.subcommand in ['upload', 'read']:
         # These commands require a port connection
         # Did the user enter a valid port?
         device_paths = map(lambda port: port.device, ports)
@@ -60,8 +56,6 @@ if __name__ == "__main__":
                 # Print string already ends with \n
                 print(port.read_until().decode(encoding="ascii"), end="")
             # TODO: need to properly terminate when Ctrl+C is pressed
-        elif args.subcommand == "send":
-            port.write(args.message.encode(encoding="ascii"))
         elif args.subcommand == "upload":
             # TODO
             pass
