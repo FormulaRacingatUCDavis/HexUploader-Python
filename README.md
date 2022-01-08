@@ -51,10 +51,11 @@ optional arguments:
 ```
 `python3 HexUploader.py upload -h`:
 ```
-usage: HexUploader.py upload [-h] -p DEVICE_PATH -f FILE
+usage: HexUploader.py upload [-h] -p DEVICE_PATH -f FILE [--read]
 
 optional arguments:
   -h, --help      show this help message and exit
   -p DEVICE_PATH  device path for port connecting the microcontroller
   -f FILE         Name of the hex binary to upload
+  --read          read immediately after uploading
 ```
