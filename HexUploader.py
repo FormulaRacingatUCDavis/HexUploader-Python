@@ -3,6 +3,15 @@ import argparse
 import serial
 from serial.tools.list_ports import comports
 
+def read_port(port):
+    # Receive and print microcontroller output
+    print("Press Ctrl+C to close the program. Receiver output:")
+    while(True):
+        # Print string already ends with \n
+        print(port.read_until().decode(encoding="ascii"), end="")
+    # TODO: need to properly terminate when Ctrl+C is pressed
+
+
 if __name__ == "__main__":
     # Parse subcommands and their required args
     parser = argparse.ArgumentParser(description='Command line toolkit for the PICDuino microcontroller')
@@ -24,6 +33,8 @@ if __name__ == "__main__":
     parser_read.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     # File required to upload to microcontroller
     parser_upload.add_argument('-f', dest="file", help="Name of the hex binary to upload", required=True)
+    # Add option to read immediately after uploading
+    parser_upload.add_argument('--read', dest="read_after_upload", action="store_true", help="read immediately after uploading")
 
     # Validate and get subcommand + flags
     args = parser.parse_args()
@@ -50,15 +61,11 @@ if __name__ == "__main__":
         port = serial.Serial(args.device_path)
 
         if args.subcommand == 'read':
-            # Receive and print microcontroller output
-            print("Press Ctrl+C to close the program. Receiver output:")
-            while(True):
-                # Print string already ends with \n
-                print(port.read_until().decode(encoding="ascii"), end="")
-            # TODO: need to properly terminate when Ctrl+C is pressed
+            read_port(port)
         elif args.subcommand == "upload":
-            # TODO
-            pass
+            # TODO: upload
+            if args.read_after_upload:
+                read_port(port)
 
         # Done using port
         port.close()
