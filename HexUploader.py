@@ -67,6 +67,3 @@ if __name__ == "__main__":
             # TODO: upload
             if args.read_after_upload:
                 read_port(args.device_path)
-
-        # Done using port
-        port.close()
