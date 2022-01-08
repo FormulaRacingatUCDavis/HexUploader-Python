@@ -58,10 +58,10 @@ if __name__ == "__main__":
             print("Press Ctrl+C to close the program. Receiver output:")
             while(True):
                 # Print string already ends with \n
-                print(port.read_until().decode(), end="")
+                print(port.read_until().decode(encoding="ascii"), end="")
             # TODO: need to properly terminate when Ctrl+C is pressed
         elif args.subcommand == "send":
-            port.write(bytes(args.message))
+            port.write(args.message.encode(encoding="ascii"))
         elif args.subcommand == "upload":
             # TODO
             pass
