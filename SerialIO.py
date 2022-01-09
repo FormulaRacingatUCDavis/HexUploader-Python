@@ -25,21 +25,24 @@ def __validate_port_name(device_path):
         print(f"Error: Invalid port with name: \"{device_path}\"")
         exit()
 
+# TODO: use proper function annotations
 '''
 Sends a message to the microcontroller and awaits a response
 
-@port is where @message is sent and @response is received
-@message is bytes to send
-@response is expected bytes
-Both @message and @response are hex strings
+@port is where @request bytes is sent and @response bytes is expected
+Both @message and @response must be in hex strings
 @timeout is the time in seconds that the response must be received after the message was sent
 Prints @success_message if @response is received
 Prints @error_message if @response wasn't received and quits the program
 '''
-def send_and_await_response(port, request, response, success_message, error_message, timeout=RESPONSE_TIMEOUT_SECS):
+def send_and_await_response(port, request, response, begin_message,
+                            success_message,
+                            error_message,
+                            timeout=RESPONSE_TIMEOUT_SECS):
     request_bytes = bytes.fromhex(request)
     port.write(request_bytes)
     # Continuously search for response until timeout
+    print(begin_message)
     start = time.time()
     while(1):
         if time.time() - start >= timeout:
@@ -55,8 +58,9 @@ def reset_pic16(port):
     send_and_await_response(port,
                             request=RESET_PIC18,
                             response=RESET_PIC18_RESPONSE,
+                            begin_message="Resetting PIC18...",
                             success_message="Successfully reset PIC18 to run the bootloader.",
-                            error_message="Could not reset PIC18")
+                            error_message="Could not reset PIC18.")
 
 ### Subcommand functions
 
@@ -84,8 +88,9 @@ def perform_handshake(args):
         send_and_await_response(port,
                                 request=PICDUINO_HANDSHAKE,
                                 response=PICDUINO_HANDSHAKE_RESPONSE,
-                                success_message="Verified this microcontroller is a PICDuino",
-                                error_message="Could not verify this microcontroller is a PICDuino")
+                                begin_message="Performing handshake...",
+                                success_message="This microcontroller is a PICDuino!",
+                                error_message="Could not verify this microcontroller is a PICDuino.")
 
 def upload(args):
     __validate_port_name(args.device_path)
