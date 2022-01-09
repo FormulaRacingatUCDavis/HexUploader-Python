@@ -2,7 +2,7 @@ import time
 import serial
 from serial.tools.list_ports import comports
 
-# PIC 16 Signals
+### PIC 16 Signals
 
 PIC16_ESC_BYTE = "05"
 # Verifies if we are connected to a PICDuino board
@@ -10,12 +10,7 @@ PICDUINO_HANDSHAKE = PIC16_ESC_BYTE + "AA"
 # Expected response
 PICDUINO_HANDSHAKE_RESPONSE = "99"
 
-def list_ports(args):
-    ports = comports()
-    # Print all the device paths
-    print("Ports found:", len(ports))
-    for port in ports:
-        print(port.device)
+### Subcommand function helper
 
 # Checks if a port name is valid
 def __validate_port_name(device_path):
@@ -24,6 +19,15 @@ def __validate_port_name(device_path):
         # The port can't be found
         print(f"Error: Invalid port with name: \"{device_path}\"")
         exit()
+
+### Subcommand functions
+
+def list_ports(args):
+    ports = comports()
+    # Print all the device paths
+    print("Ports found:", len(ports))
+    for port in ports:
+        print(port.device)
 
 def read_port(args):
     __validate_port_name(args.device_path)

@@ -31,6 +31,7 @@ def create_parser():
     parser_read.set_defaults(func=SerialIO.read_port)
     parser_upload.set_defaults(func=SerialIO.upload)
     parser_verify.set_defaults(func=SerialIO.perform_handshake)
+
     return parser
 
 if __name__ == "__main__":
