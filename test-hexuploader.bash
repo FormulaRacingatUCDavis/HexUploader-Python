@@ -9,8 +9,8 @@ tests=(
 	"python3 HexUploader.py invalid-subcommand" \
 	"python3 HexUploader.py listports" \
 	"python3 HexUploader.py read" \
-	"python3 HexUploader.py send" \
 	"python3 HexUploader.py upload" \
+	"python3 HexUploader.py verify" \
 	# TODO: add more tests
 )
 
