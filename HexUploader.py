@@ -32,6 +32,8 @@ def create_parser():
     # Add option to read immediately after uploading
     parser_upload.add_argument('--read', dest="read_after_upload", action="store_true", help="read immediately after uploading")
 
+    return parser
+
 def read_port(device_path):
     # Receive and print microcontroller output
     print("Press Ctrl+C to close the program. Receiver output:")
