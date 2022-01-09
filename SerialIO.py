@@ -10,7 +10,12 @@ PICDUINO_HANDSHAKE = PIC16_ESC_BYTE + "AA"
 # Expected response
 PICDUINO_HANDSHAKE_RESPONSE = "99"
 
-### Subcommand function helper
+RESET_PIC18 = PIC16_ESC_BYTE + "BB"
+RESET_PIC18_RESPONSE = "01"
+
+RESPONSE_TIMEOUT_SECS = 3
+
+### Subcommand function helpers
 
 # Checks if a port name is valid
 def __validate_port_name(device_path):
@@ -19,6 +24,39 @@ def __validate_port_name(device_path):
         # The port can't be found
         print(f"Error: Invalid port with name: \"{device_path}\"")
         exit()
+
+'''
+Sends a message to the microcontroller and awaits a response
+
+@port is where @message is sent and @response is received
+@message is bytes to send
+@response is expected bytes
+Both @message and @response are hex strings
+@timeout is the time in seconds that the response must be received after the message was sent
+Prints @success_message if @response is received
+Prints @error_message if @response wasn't received and quits the program
+'''
+def send_and_await_response(port, request, response, success_message, error_message, timeout=RESPONSE_TIMEOUT_SECS):
+    request_bytes = bytes.fromhex(request)
+    port.write(request_bytes)
+    # Continuously search for response until timeout
+    start = time.time()
+    while(1):
+        if time.time() - start >= timeout:
+            print(error_message)
+            exit()
+
+        byte = port.read()
+        if byte.hex() == response:
+            print(success_message)
+            break;
+
+def reset_pic16(port):
+    send_and_await_response(port,
+                            request=RESET_PIC18,
+                            response=RESET_PIC18_RESPONSE,
+                            success_message="Successfully reset PIC18 to run the bootloader.",
+                            error_message="Could not reset PIC18")
 
 ### Subcommand functions
 
@@ -42,27 +80,12 @@ def read_port(args):
 
 def perform_handshake(args):
     __validate_port_name(args.device_path)
-
     with serial.Serial(args.device_path) as port:
-        # Perform handshake
-        handshake_request = bytes.fromhex(PICDUINO_HANDSHAKE)
-        port.write(handshake_request)
-
-        print("Performing handshake with microcontroller...")
-
-        start = time.time()
-        while 1:
-            if time.time() - start >= 3: # 3 seconds timeout
-                print("Cannot verify if board is a PICDuino")
-                exit()
-            byte = port.read()
-            # Issue: the 0x99 can come from anywhere, not just the PIC16
-            if byte.hex() == PICDUINO_HANDSHAKE_RESPONSE:
-                # Verified that microcontroller is PICDuino
-                break
-            # Otherwise keep listening for response
-
-        print("This board is a PICDuino")
+        send_and_await_response(port,
+                                request=PICDUINO_HANDSHAKE,
+                                response=PICDUINO_HANDSHAKE_RESPONSE,
+                                success_message="Verified this microcontroller is a PICDuino",
+                                error_message="Could not verify this microcontroller is a PICDuino")
 
 def upload(args):
     __validate_port_name(args.device_path)
@@ -73,7 +96,8 @@ def upload(args):
     except:
         print(f"Error: cannot open file \"{args.file}\"")
 
-    # TODO: upload
+    with serial.Serial(args.device_path) as port:
+        reset_pic16(port)
 
     if args.read_after_upload:
         read_port(args.device_path)
