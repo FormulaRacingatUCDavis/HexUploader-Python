@@ -2,7 +2,7 @@ import time
 import serial
 from serial.tools.list_ports import comports
 
-### PIC 16 Signals
+### PIC 16 signals (hex)
 
 PIC16_ESC_BYTE = "05"
 # Verifies if we are connected to a PICDuino board
@@ -11,6 +11,33 @@ PICDUINO_HANDSHAKE_RESPONSE = "99"
 # Resets PIC18 to start up the bootloader again
 RESET_PIC18 = PIC16_ESC_BYTE + "BB"
 RESET_PIC18_RESPONSE = "01"
+
+### Bootloader commands (hex)
+
+# Expected response for all commands
+CMD_SUCCESS_RESPONSE = "01"
+CMD_UNSUPPORTED_RESPONSE = "FF"
+CMD_ADDRESS_ERROR_RESPONSE = "FE"
+
+## Erase flash
+ERASE_FLASH_CMD = "03"
+
+# Range of addresses to erase
+APP_START_ADDRESS = 0x900
+FLASH_END_ADDRESS = 0x10000
+
+# The erase flash command takes in a number of rows to erase
+ROW_ADDRESS_COUNT = 128
+APP_NUM_ROWS = (FLASH_END_ADDRESS - APP_START_ADDRESS) // ROW_ADDRESS_COUNT
+
+# Must convert app start address to little endian
+# ERASE_START_ADDR = "00" + "09" + "0000"
+UNLOCK_SEQUENCE = "55AA"
+
+# Number of rows: (0x10000 - 0x900) / 128 = 494
+# 494 = 0x1EE -> EE 01
+# Start address: 0x900 -> 00 09 00 00
+ERASE_FLASH = ERASE_FLASH_CMD + "EE01" + UNLOCK_SEQUENCE + "00090000"
 
 RESPONSE_TIMEOUT_SECS = 3
 
@@ -56,10 +83,19 @@ def send_and_await_response(port_name, request, response, begin_message,
 
             # Read one byte at a time
             byte = port.read()
-            if byte.hex() == response:
+            if byte != b'':
+               print(byte.hex())
+
+            if byte == bytes.fromhex(response):
                 # Found the right response
                 print(success_message)
                 break
+            elif byte == bytes.fromhex(CMD_UNSUPPORTED_RESPONSE):
+                print("Error: command unsupported")
+                exit()
+            elif byte == bytes.fromhex(CMD_ADDRESS_ERROR_RESPONSE):
+                print("Error: address error")
+                exit()
             # Continue checking for response
 
 ### Subcommand functions
@@ -110,6 +146,22 @@ def upload(args):
                             begin_message="Resetting PIC18...",
                             success_message="Successfully reset PIC18. Bootloader is now running.",
                             error_message="Could not reset PIC18.")
+
+    # send_and_await_response(args.device_path,
+    #                         request="000000000000000000",
+    #                         response="99",
+    #                         begin_message="Getting bootloader info",
+    #                         success_message="done",
+    #                         error_message="did not work")
+
+    # Send erase flash command
+    send_and_await_response(args.device_path,
+                            request=ERASE_FLASH,
+                            response=CMD_SUCCESS_RESPONSE,
+                            begin_message="Erasing flash...",
+                            success_message="Successfully erased flash.",
+                            error_message="Could not erase flash.",
+                            timeout=900)
 
     if args.read_after_upload:
         read_port(args.device_path)
