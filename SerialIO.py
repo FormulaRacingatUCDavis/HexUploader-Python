@@ -7,9 +7,8 @@ from serial.tools.list_ports import comports
 PIC16_ESC_BYTE = "05"
 # Verifies if we are connected to a PICDuino board
 PICDUINO_HANDSHAKE = PIC16_ESC_BYTE + "AA"
-# Expected response
 PICDUINO_HANDSHAKE_RESPONSE = "99"
-
+# Resets PIC18 to start up the bootloader again
 RESET_PIC18 = PIC16_ESC_BYTE + "BB"
 RESET_PIC18_RESPONSE = "01"
 
@@ -102,12 +101,14 @@ def upload(args):
     except:
         print(f"Error: cannot open file \"{args.file}\"")
 
+    # TODO: perform handshake to verify this is a PIC18?
+
     # Reset PIC18
     send_and_await_response(args.device_path,
                             request=RESET_PIC18,
                             response=RESET_PIC18_RESPONSE,
                             begin_message="Resetting PIC18...",
-                            success_message="Successfully reset PIC18 to run the bootloader.",
+                            success_message="Successfully reset PIC18. Bootloader is now running.",
                             error_message="Could not reset PIC18.")
 
     if args.read_after_upload:
