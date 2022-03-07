@@ -18,7 +18,7 @@ def create_parser():
     PORT_FLAG = '-p'
     PORT_DESTNAME = 'device_path'
     PORT_HELP_STR = 'device path for port connecting the microcontroller'
-    parser_upload.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
+    parser_upload.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=False)
     parser_read.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     parser_verify.add_argument(PORT_FLAG, dest=PORT_DESTNAME, help=PORT_HELP_STR, required=True)
     # File required to upload to microcontroller
