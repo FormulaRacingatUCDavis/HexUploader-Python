@@ -1,6 +1,10 @@
 import time
-import serial
-from serial.tools.list_ports import comports
+try:
+    import serial
+    from serial.tools.list_ports import comports
+except:
+    print("Could not import pyserial. Please make sure it is installed.")
+    exit()
 
 ### PIC 16 signals (hex)
 
