@@ -1,4 +1,5 @@
 import time
+
 try:
     import serial
     from serial.tools.list_ports import comports
@@ -9,6 +10,11 @@ except:
 ### PIC 16 signals (hex)
 
 PIC16_ESC_BYTE = "05"
+
+#stop messages coming from PIC18
+PICDUINO_DISABLE_UART_USB = PIC16_ESC_BYTE + "CC"
+PICDUINO_ENABLE_UART_USB = PIC16_ESC_BYTE + "CD"
+
 # Verifies if we are connected to a PICDuino board
 PICDUINO_HANDSHAKE = PIC16_ESC_BYTE + "AA"
 PICDUINO_HANDSHAKE_RESPONSE = "99"
@@ -59,6 +65,7 @@ ERASE_FLASH = ERASE_FLASH_CMD + "EE01" + UNLOCK_SEQUENCE + NEW_RESET_VECTOR
 CALCULATE_CHECKSUM = CALCULATE_CHECKSUM_CMD + "00F7" + "0000" + NEW_RESET_VECTOR
 
 RESPONSE_TIMEOUT_SECS = 3
+BYTE_TIMEOUT_SECS = 0.1
 
 ### Subcommand function helpers
 
@@ -80,39 +87,47 @@ Prints @begin_message when beginning to expect @response
 Prints @success_message if @response is received
 Prints @error_message if @response wasn't received and quits the program
 '''
-def send_and_await_response(port_name, request, rx_length, begin_message=None,
+def send_and_await_response(port, request, rx_length,
+                            begin_message=None,
                             error_message="Timeout!",
-                            timeout=RESPONSE_TIMEOUT_SECS):
+                            timeout=RESPONSE_TIMEOUT_SECS,
+                            exit_on_fail=True):
     # Timeout is set to 0 so reading from the port does not stall the program
-    with serial.Serial(port_name, timeout=0) as port:
-        # Send request
-        request_bytes = bytes.fromhex(request)
-        port.write(request_bytes)
+    #with serial.Serial(port_name, timeout=0) as port:
 
-        if begin_message: 
-            print(begin_message)
+    port.reset_input_buffer() #make sure buffer is empty
 
-        # Constantly check for response until timeout
-        start = time.time()
+    # Send request
+    request_bytes = bytes.fromhex(request)
+    port.write(request_bytes)
 
-        rx = []
-        while len(rx) < rx_length:
-            if time.time() - start >= timeout:
-                # Response took too long to arrive
-                if error_message:
-                    print(error_message)
-                raise Exception("Request timed out!")
+    if begin_message:
+        print(begin_message)
 
-            # Read one byte at a time
-            byte = port.read()
-            if byte != b'':
-               rx.append(byte)
-        return rx
+    start = time.time()
+    rx = []
+    while len(rx) < rx_length:
+        if time.time() - start >= timeout:
+            # Response took too long to arrive
+            if error_message:
+                print(error_message)
+            if exit_on_fail:
+                exit()
+            else:
+                return False
 
-def compare_result(expected, actual, success_message=None, error_message=None):
+        # Read one byte at a time
+        byte = port.read()
+        if byte != b'':
+            rx.append(byte)
+
+    return rx
+
+def compare_result(expected, actual, success_message=None, error_message=None, exit_on_fail=True):
     if actual == expected:
         if success_message:
             print(success_message)
+        return True
 
     elif actual == bytes.fromhex(CMD_UNSUPPORTED_RESPONSE):
         print("Error: command unsupported")
@@ -123,9 +138,28 @@ def compare_result(expected, actual, success_message=None, error_message=None):
     else:
         if error_message:
             print(error_message)
-        exit()
+            
+        if exit_on_fail:
+            exit()
+        else:
+            return False
+
+def disable_uart_usb(port):
+    send_and_await_response(port,
+                            PICDUINO_DISABLE_UART_USB,
+                            0)
+
+    time.sleep(0.1)
+
+    port.reset_input_buffer()
 
 
+def enable_uart_usb(port):
+    send_and_await_response(port,
+                            PICDUINO_ENABLE_UART_USB,
+                            0)
+
+    time.sleep(0.1)
 
 ### Subcommand functions
 
@@ -139,22 +173,27 @@ def list_ports(args, output=True):
     austuino_ports = []
     for port in ports:
         is_austuino = ''
-        try:
-            rx = send_and_await_response(port.device,
-                                request=PICDUINO_HANDSHAKE,
-                                error_message=None,
-                                rx_length=1,
-                                timeout=0.1)
-        except Exception:
-            rx = False
+        with serial.Serial(port.device, timeout=BYTE_TIMEOUT_SECS) as device:
+            disable_uart_usb(device)  #disable incoming uart messages
 
-        if rx:
-            if rx[0] == bytes.fromhex(PICDUINO_HANDSHAKE_RESPONSE):
-                is_austuino = ' Austuino'
-                austuino_ports.append(port.device)
+            rx = send_and_await_response(device,  #attempt handshake
+                            request=PICDUINO_HANDSHAKE,
+                            error_message=None,
+                            rx_length=1,
+                            timeout=0.3,
+                            exit_on_fail=False)
+
+            if rx:
+                if rx[0] == bytes.fromhex(PICDUINO_HANDSHAKE_RESPONSE):  #is it an austiuno?
+                    is_austuino = ' Austuino'
+                    austuino_ports.append(port.device)
+                    enable_uart_usb(device)  #re-enable incoming uart messages
 
         if output:
             print(port.device + is_austuino)
+
+
+
 
     return austuino_ports
 
@@ -275,22 +314,45 @@ def perform_handshake(args):
 #                            error_message="Could not verify this microcontroller is a PICDuino.")
 
 
-def reset(args):
-    # Reset PIC18
-    rx = send_and_await_response(args.device_path,
-                            request=RESET_PIC18,
-                            rx_length=1,
-                            begin_message="Resetting PIC18..."
-                            )
+def reset(port):
+    rx = send_and_await_response(port,
+                                 request=RESET_PIC18,
+                                 rx_length=1,
+                                 begin_message="Resetting PIC18..."
+                                 )
 
     compare_result(bytes.fromhex(RESET_PIC18_RESPONSE),
                    rx[0],
                    success_message="Successfully reset PIC18.",
                    error_message="Could not reset PIC18.")
+    # Reset PIC18
+    #port.reset_input_buffer()
+
+    # Send request
+    #request_bytes = bytes.fromhex(RESET_PIC18)
+    #port.write(request_bytes)
+
+    #time.sleep(0.1)
+
+    #if port.in_waiting == 0:
+    #    print("No response!")
+
+   # while port.in_waiting > 1:
+    #    port.read()
+
+    #rx = port.read()
+
+    #success = compare_result(bytes.fromhex(RESET_PIC18_RESPONSE),
+    #               rx,
+    #               success_message="Successfully reset PIC18.",
+    #               error_message="Could not reset PIC18.")
+            
+
+        
 
                             
-def request_bootloader(args):
-    rx = send_and_await_response(args.device_path,
+def request_bootloader(port):
+    rx = send_and_await_response(port,
                             request=REQUEST_BOOTLOADER, 
                             rx_length=1,
                             begin_message="Requesting bootloader...",
@@ -301,9 +363,9 @@ def request_bootloader(args):
                    success_message="Bootloader running.",
                    error_message="Could not start bootloader.")
                             
-def erase_flash(args):
+def erase_flash(port):
     # Send erase flash command
-    rx = send_and_await_response(args.device_path,
+    rx = send_and_await_response(port,
                             request=ERASE_FLASH,
                             rx_length=10,
                             begin_message="Erasing flash...",
@@ -314,8 +376,8 @@ def erase_flash(args):
                    success_message = "Successfully erased flash.",
                    error_message = "Could not erase flash.")
 
-def validate(args, memory_checksum):
-    rx = send_and_await_response(args.device_path,
+def validate(port, memory_checksum):
+    rx = send_and_await_response(port,
                                  request=CALCULATE_CHECKSUM,
                                  rx_length=11,
                                  begin_message="Validating...",
@@ -357,28 +419,31 @@ def upload(args):
     print("Hex loaded.")
     # TODO: perform handshake to verify this is a PIC18?
 
-    reset(args)
-    request_bootloader(args)
-    erase_flash(args)
+    with serial.Serial(args.device_path, timeout=BYTE_TIMEOUT_SECS) as port:
+        disable_uart_usb(port)          #halt incoming messages
+        reset(port)                     #reset PIC18
+        enable_uart_usb(port)
+        request_bootloader(port)
+        erase_flash(port)
 
-    #write flash
-    print('Programming...')
-    for write_command in write_commands:
-        rx = send_and_await_response(args.device_path,
-                                request=write_command,
-                                rx_length=10)
+        #write flash
+        print('Programming...')
+        for write_command in write_commands:
+            rx = send_and_await_response(port,
+                                    request=write_command,
+                                    rx_length=10)
 
-        compare_result(bytes.fromhex(CMD_SUCCESS_RESPONSE),
-                       rx[9],
-                       error_message='Failed to write record.')
+            compare_result(bytes.fromhex(CMD_SUCCESS_RESPONSE),
+                           rx[9],
+                           error_message='Failed to write record.')
 
-    print('Programming complete.')
+        print('Programming complete.')
 
-    #validate checksum
-    validate(args, memory_checksum)
+        #validate checksum
+        validate(port, memory_checksum)
 
-    # reset to exit bootloader
-    reset(args)
+        # reset to exit bootloader
+        reset(port)
 
     if args.read_after_upload:
         read_port(args.device_path)

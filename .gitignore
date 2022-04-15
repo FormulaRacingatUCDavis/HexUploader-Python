@@ -1,3 +1,3 @@
-/.idea
+.idea/
 *.hex
-/__pycache__
+__pycache__/
