@@ -54,7 +54,7 @@ optional arguments:
 ```
 `python3 HexUploader.py upload -h`:
 ```
-usage: HexUploader.py upload [-h] -p DEVICE_PATH -f FILE [--read]
+usage: HexUploader.py upload [-h] -f FILE [-p DEVICE_PATH] [--read]
 
 optional arguments:
   -h, --help      show this help message and exit
