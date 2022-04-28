@@ -20,9 +20,7 @@ Only verified to work on:
 ## How to use
 1. Physically connect Arduino to computer
 2. Run the script according to the syntax listed below.
-
-### Subcommands not working
-- upload
+[More Instructions](https://docs.google.com/document/d/1kWe5ou5Cm-TpxO3m4ftzPHIjvS3QN3U0O7nmXdVuqW8/edit?usp=sharing)
 
 ### Note for Windows
 If you are using Windows, use `py` instead of `python3`.
