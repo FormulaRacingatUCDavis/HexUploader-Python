@@ -7,9 +7,10 @@ Only verified to work on:
 **OS**
 - Ubuntu 20.04.3 LTS
 - Windows 10 Build 19043
+- Windows 11 Build 22000.434
 
 **Misc**
-- Python version: 3.8.10 (Linux) and 3.10.1 (Windows)
+- Python version: 3.8.10 (Linux), 3.10.1 (Windows), 3.9 (Windows)
 - pyserial version: v3.5 (both Linux and Windows)
 
 ## Linux Setup
