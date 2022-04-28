@@ -110,7 +110,7 @@ def send_and_await_response(port, request, rx_length,
         if time.time() - start >= timeout:
             # Response took too long to arrive
             if error_message:
-                print(error_message)
+                print("ERROR: ", error_message)
             if exit_on_fail:
                 exit()
             else:
@@ -173,21 +173,9 @@ def list_ports(args, output=True):
     austuino_ports = []
     for port in ports:
         is_austuino = ''
-        with serial.Serial(port.device, timeout=BYTE_TIMEOUT_SECS) as device:
-            disable_uart_usb(device)  #disable incoming uart messages
-
-            rx = send_and_await_response(device,  #attempt handshake
-                            request=PICDUINO_HANDSHAKE,
-                            error_message=None,
-                            rx_length=1,
-                            timeout=0.3,
-                            exit_on_fail=False)
-
-            if rx:
-                if rx[0] == bytes.fromhex(PICDUINO_HANDSHAKE_RESPONSE):  #is it an austiuno?
-                    is_austuino = ' Austuino'
-                    austuino_ports.append(port.device)
-                    enable_uart_usb(device)  #re-enable incoming uart messages
+        if port.vid == 1240 and port.pid == 10:
+            is_austuino = ' Austuino'
+            austuino_ports.append(port.device)
 
         if output:
             print(port.device + is_austuino)
@@ -218,11 +206,13 @@ EOF_RECORD = "01"
 EXT_ADDR_RECORD = "04"
             
 def parse_hex(args):
+    print("Loading hex...")
     # Open hex file
     try:
         hex_file = open(args.file)
     except:
         print(f"Error: cannot open file \"{args.file}\"")
+        exit()
         
     lines = hex_file.readlines()
     hex_file.close()
@@ -272,14 +262,26 @@ def parse_hex(args):
             ext_addr = bytes[5] + bytes[4]   #upper 16 bits of address, little endian
             
         elif record_type == DATA_RECORD:
-            if ext_addr == "0000" and bytes[1] == "00" and bytes[2] in ["00", "08", "18"]:     #reset vector and interrupt vectors
-                bytes[1] = "09"
+            if ext_addr == "0000":
+                if bytes[1] == "00" and bytes[2] in ["00", "08", "18"]:     #reset vector and interrupt vectors
+                    bytes[1] = "09"    #remap reset vector to 0x0900
+                    
+                elif unhex(bytes[1]) < 9:   #check data other than reset vector below address 0x0900
+                    print()
+                    print("ERROR!!!")
+                    print("Program will overwrite bootloader!")
+                    print("Please set ROM Ranges to 900-7FFF under:")
+                    print("Project Properties > XC8 Linker > Memory Model")
+                    print("Exiting")
+                    exit()
+                
             
-            if ext_addr == "0000":  # outside of program memory
+            
+            if ext_addr == "0000":  #within program memory
                 cmd = WRITE_FLASH_CMD
                 in_program_memory = True
             else: 
-                cmd = WRITE_CONFIG_CMD
+                cmd = WRITE_CONFIG_CMD  # outside of program memory
                 in_program_memory = False
                 
             write_command = cmd + bytes[0] + "00" + UNLOCK_SEQUENCE + bytes[2] + bytes[1] + ext_addr
@@ -296,6 +298,7 @@ def parse_hex(args):
             
         elif record_type == EOF_RECORD:
             memory_checksum &= 0xFFFF  #16 bits
+            print("Hex loaded.")
             return write_commands, memory_checksum
                     
     print("No EOF record found!")
@@ -380,8 +383,7 @@ def validate(port, memory_checksum):
     rx = send_and_await_response(port,
                                  request=CALCULATE_CHECKSUM,
                                  rx_length=11,
-                                 begin_message="Validating...",
-                                 )
+                                 begin_message="Validating...")
 
     received_checksum = int.from_bytes(rx[10] + rx[9], "big")
 
@@ -400,9 +402,9 @@ def upload(args):
             print(f'Austuino found on {args.device_path}')
         else:
             if len(austuino_ports) == 0:
-                print('No Austuinos found!')
+                print('NO AUSTUINOS FOUND!')
             else:
-                print('More than one Austuino found!')
+                print('MORE THAN ONE AUSTUINO FOUND!')
 
             print('Please specify port with "-p".')
             list_ports(args, output=True)    #print ports for convenience
@@ -410,13 +412,13 @@ def upload(args):
 
 
 
-    print("Loading hex...")
+    
     write_commands, memory_checksum = parse_hex(args)
     if not write_commands: 
-        print("Invalid hex.")
+        print("ERROR! INVALID HEX.")
         exit()
 
-    print("Hex loaded.")
+    print("\nIS YOUR UART BAUD RATE SET TO 19200?\n")
     # TODO: perform handshake to verify this is a PIC18?
 
     with serial.Serial(args.device_path, timeout=BYTE_TIMEOUT_SECS) as port:
@@ -444,6 +446,7 @@ def upload(args):
 
         # reset to exit bootloader
         reset(port)
+        print("\nUPLOAD SUCCESSFUL WOOOOOOOOOOOOO!")
 
     if args.read_after_upload:
         read_port(args.device_path)
