@@ -199,6 +199,12 @@ def read_port(args):
             
 def unhex(hex):
     return int(hex, 16)    
+    
+def escape(write_command): 
+    i = 0;
+    for i in range(0, len(write_command), 2): 
+        if (write_command[i] + write_command[i+1]) == PIC16_ESC_BYTE:
+            pass
             
 # record types: 
 DATA_RECORD = "00"
